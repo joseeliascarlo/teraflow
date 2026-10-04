@@ -7,6 +7,6 @@
   No cambies nada más en este archivo.
 */
 window.TERAFLOW_CONFIG = {
-  GOOGLE_CLIENT_ID: "PEGA_AQUI_TU_CLIENT_ID",
+  GOOGLE_CLIENT_ID: "681383179390-ceishm4vnfeic0nrnusedtrtkbdvi64b.apps.googleusercontent.com",
   DRIVE_FILE_NAME: "TeraFlow - Respaldo.json"
 };
