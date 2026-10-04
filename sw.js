@@ -3,7 +3,7 @@
   Guarda una copia del app en el equipo para que abra aunque no haya conexión.
   Cada versión nueva cambia VERSION; el app avisa con "Hay una versión nueva".
 */
-const VERSION = 'teraflow-2026.10.03';
+const VERSION = 'teraflow-2026.10.03.2';
 const ASSETS = [
   './',
   './index.html',

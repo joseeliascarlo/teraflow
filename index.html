@@ -366,6 +366,13 @@
         }
         #placeBanner.hidden, #updateBanner.hidden, #chipActions.hidden { display: none !important; }
         #toast-container { top: 72px; }
+        #notesModal, #contactModal { z-index: 55; }
+        .tf-btn.hidden { display: none !important; }
+        .tf-input { color-scheme: dark; }
+        .tf-textarea { width: 100%; min-height: 110px; resize: vertical; line-height: 1.5; padding: 10px 12px; }
+        .tf-note-card { background: #111827; border: 1px solid #374151; border-radius: 12px; padding: 12px 14px; }
+        .tf-family-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #111827; }
+        .tf-field-label { display: block; font-size: 13px; color: #d1d5db; }
         .toast-item { cursor: pointer; max-width: min(460px, calc(100vw - 40px)); }
         .toast-action { margin-left: 4px; padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,.18); font-weight: 600; white-space: nowrap; }
 
@@ -412,6 +419,9 @@
                 </button>
                 <button type="button" id="redoBtn" class="tf-icon-btn" title="Rehacer" aria-label="Rehacer">
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+                </button>
+                <button type="button" id="calHeaderBtn" class="tf-icon-btn" title="Google Calendar" aria-label="Enviar a Google Calendar">
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 </button>
                 <button type="button" id="cloudBtn" class="tf-icon-btn" title="Respaldo" aria-label="Respaldo">
                     <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
@@ -489,6 +499,13 @@
                             <p class="text-xs text-gray-500">Estadísticas e impresión</p>
                         </div>
                     </a>
+                    <a href="#" id="menuFamiliesBtn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                        <span>📇</span>
+                        <div>
+                            <p class="font-medium">Contactos de familias</p>
+                            <p class="text-xs text-gray-500">Llamar, WhatsApp y email</p>
+                        </div>
+                    </a>
                     <div class="border-t border-gray-700 my-1"></div>
                     <a href="#" id="exportBtn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                         <span>🖼️</span>
@@ -500,7 +517,7 @@
                     </a>
                     <a href="#" id="exportIcsBtn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                         <span>📅</span>
-                        <div><p class="font-medium">Exportar a Calendario</p></div>
+                        <div><p class="font-medium">Google Calendar</p><p class="text-xs text-gray-500">Enviar el horario con un toque</p></div>
                     </a>
                     <div class="border-t border-gray-700 my-1"></div>
                     <a href="#" id="reset-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700">
@@ -754,6 +771,106 @@
 <div id="updateBanner" class="hidden" role="status">
     <span>Hay una versión nueva de TeraFlow.</span>
     <button type="button" id="updateNowBtn" class="tf-btn tf-btn-primary tf-btn-sm">Actualizar</button>
+</div>
+
+<!-- ===== Google Calendar ===== -->
+<div id="calModal" class="tf-overlay" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+    <div class="tf-panel w-full max-w-lg">
+        <div class="flex items-start justify-between gap-4 p-5 pb-3">
+            <div>
+                <h3 id="calTitle" class="text-xl font-bold text-gray-100">Google Calendar</h3>
+                <p class="text-sm text-gray-400 mt-1">Pone tu horario en un calendario aparte llamado TeraFlow. Las sesiones salen con iniciales y grado.</p>
+            </div>
+            <button type="button" class="tf-icon-btn" data-close="calModal" aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="px-5 pb-5 space-y-4 overflow-y-auto">
+            <div id="calStatus" class="tf-status"></div>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="tf-field-label">Desde<input type="date" id="calStart" class="tf-input w-full mt-1"></label>
+                <label class="tf-field-label">Hasta<input type="date" id="calEnd" class="tf-input w-full mt-1"></label>
+            </div>
+            <p class="text-sm text-gray-400">Cada sesión se repite cada semana entre esas fechas. Las de 2 veces al mes se repiten cada dos semanas.</p>
+            <button type="button" id="calSendBtn" class="tf-btn tf-btn-primary tf-btn-lg w-full">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Enviar a Google Calendar
+            </button>
+            <div id="calNotConfigured" class="tf-note hidden">Google todavía no está conectado. Sigue los Pasos 3 y 4 de la guía.</div>
+            <p class="text-sm text-gray-400">Haz los cambios en TeraFlow y vuelve a enviar: solo se manda lo que cambió. Lo que edites directo en el calendario TeraFlow se reemplaza en el próximo envío.</p>
+            <div class="tf-section flex flex-wrap gap-3">
+                <a href="https://calendar.google.com" target="_blank" rel="noopener" class="tf-btn tf-btn-ghost">Abrir Google Calendar</a>
+                <button type="button" id="calIcsBtn" class="tf-btn tf-btn-ghost">Descargar un día (.ics)</button>
+                <button type="button" id="calRemoveBtn" class="tf-btn tf-btn-ghost hidden">Quitar calendario TeraFlow</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Notas de sesión ===== -->
+<div id="notesModal" class="tf-overlay" role="dialog" aria-modal="true" aria-labelledby="notesTitle">
+    <div class="tf-panel w-full max-w-2xl">
+        <div class="flex items-start justify-between gap-4 p-5 pb-3">
+            <div class="min-w-0">
+                <h3 id="notesTitle" class="text-xl font-bold text-gray-100 truncate"></h3>
+                <p id="notesSub" class="text-sm text-gray-400 mt-1"></p>
+            </div>
+            <button type="button" class="tf-icon-btn" data-close="notesModal" aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="px-5 pb-5 space-y-4 overflow-y-auto">
+            <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                    <label for="noteDate" class="text-sm text-gray-300">Fecha</label>
+                    <input type="date" id="noteDate" class="tf-input">
+                </div>
+                <textarea id="noteText" class="tf-input tf-textarea" placeholder="Qué trabajaron, cómo respondió, próximos pasos…"></textarea>
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="noteCancelEditBtn" class="tf-btn tf-btn-ghost hidden">Cancelar edición</button>
+                    <button type="button" id="noteSaveBtn" class="tf-btn tf-btn-primary">Guardar nota</button>
+                </div>
+            </div>
+            <div class="tf-section">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <p id="notesCount" class="tf-section-title mb-0"></p>
+                    <button type="button" id="notesCopyAllBtn" class="tf-btn tf-btn-ghost tf-btn-sm">Copiar todas</button>
+                </div>
+                <div id="notesList" class="space-y-3"></div>
+            </div>
+            <p class="text-xs text-gray-500">Las notas se guardan en este equipo y viajan al otro con Guardar en Drive.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Contacto de una familia ===== -->
+<div id="contactModal" class="tf-overlay" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+    <div class="tf-panel w-full max-w-md">
+        <div class="flex items-start justify-between gap-4 p-5 pb-3">
+            <div class="min-w-0">
+                <h3 id="contactTitle" class="text-xl font-bold text-gray-100 truncate"></h3>
+                <p id="contactSub" class="text-sm text-gray-400 mt-1"></p>
+            </div>
+            <button type="button" class="tf-icon-btn" data-close="contactModal" aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="px-5 pb-5 space-y-4 overflow-y-auto">
+            <div id="contactBody" class="space-y-3"></div>
+            <div class="tf-section"><button type="button" id="contactEditBtn" class="tf-btn tf-btn-ghost w-full">Ver o editar datos</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Contactos de familias ===== -->
+<div id="familiesModal" class="tf-overlay" role="dialog" aria-modal="true" aria-labelledby="familiesTitle">
+    <div class="tf-panel w-full max-w-2xl">
+        <div class="flex items-start justify-between gap-4 p-5 pb-3">
+            <div>
+                <h3 id="familiesTitle" class="text-xl font-bold text-gray-100">Contactos de familias</h3>
+                <p class="text-sm text-gray-400 mt-1">Se quedan en TeraFlow. Toca para llamar, escribir por WhatsApp o enviar un email.</p>
+            </div>
+            <button type="button" class="tf-icon-btn" data-close="familiesModal" aria-label="Cerrar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="px-5 pb-5 space-y-3 overflow-y-auto">
+            <input id="familiesSearch" type="search" class="tf-input w-full" placeholder="Buscar estudiante, maestro o teléfono" autocomplete="off">
+            <div id="familiesList" class="space-y-2"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1968,8 +2085,10 @@
                             <div><label for="studentMomPhone" class="block text-xs text-gray-400">Teléfono</label><input id="studentMomPhone" type="tel" class="mt-1 block w-full px-3 py-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" /></div>
                             <div><label for="studentMomEmail" class="block text-xs text-gray-400">Email</label><input id="studentMomEmail" type="email" class="mt-1 block w-full px-3 py-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" /></div>
                         </div>
+                        <div id="familyActions" class="flex flex-wrap gap-2 mt-3"></div>
                         <div class="mt-4"><label for="studentMomAddress" class="block text-xs text-gray-400">Dirección Postal</label><textarea id="studentMomAddress" rows="2" class="mt-1 block w-full px-3 py-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea></div>
                     </div>
+                    <div id="studentNotesRow" class="hidden border-t border-gray-700 mt-4 pt-4"><h4 class="font-semibold text-gray-300 mb-2">Notas de sesión</h4><button type="button" id="openNotesBtn" class="tf-btn tf-btn-secondary w-full"></button></div>
                     <div class="border-t border-gray-700 mt-4 pt-4"><h4 class="font-semibold text-gray-300 mb-2">Conflictos con Otros Especialistas</h4><div id="other-services-list" class="space-y-2 mb-3"></div><div class="flex gap-2 items-end"><div class="flex-grow"><label class="text-xs text-gray-400">Especialista</label><input id="other-specialist-name" type="text" class="mt-1 w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-sm text-gray-100"></div><div><label class="text-xs text-gray-400">Día</label><select id="other-specialist-day" class="mt-1 w-full bg-gray-700 text-gray-100 border-gray-600 rounded-md shadow-sm text-sm"></select></div><div><label class="text-xs text-gray-400">Hora</label><select id="other-specialist-time" class="mt-1 w-full bg-gray-700 text-gray-100 border-gray-600 rounded-md shadow-sm text-sm"></select></div><button type="button" id="add-other-service-btn" class="bg-blue-500 text-white rounded-md h-9 w-9 flex-shrink-0 flex items-center justify-center hover:bg-blue-600">+</button></div></div>
                     <div style="display:none" class="border-t border-gray-700 mt-4 pt-4"><h4 class="font-semibold text-gray-300 mb-2">Apuntes de Sesión</h4><textarea id="sessionNotes" class="mt-1 block w-full h-32 px-3 py-2 bg-gray-700 text-gray-100 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Escribe aquí las notas de la sesión..."></textarea></div>
                     <div class="flex-grow"></div>
@@ -2043,6 +2162,7 @@
             renderOtherServices([]);
             deleteBtn.classList.add('hidden');
         }
+        tfSideSheetExtras(studentId);
         sheet.classList.add('open');
     }
 
@@ -2959,7 +3079,7 @@
     // ===========================================
     // TERAFLOW APP: guardado seguro, respaldo y tablet
     // ===========================================
-    const TF_VERSION = '2026.10.03';
+    const TF_VERSION = '2026.10.03.2';
     const TF_CFG = window.TERAFLOW_CONFIG || {};
     const TF_DRIVE_FILE = TF_CFG.DRIVE_FILE_NAME || 'TeraFlow - Respaldo.json';
     const TF_IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
@@ -3007,7 +3127,11 @@
         tfUpdateCloudBadge();
         tfScheduleSnapshot();
     }
-    function tfAfterSave() { tfMarkDirty(); }
+    function tfAfterSave() {
+        tfMarkDirty();
+        const nm = document.getElementById('notesModal');
+        if (nm && nm.classList.contains('open')) tfRenderNotes();
+    }
 
     // ---------- Copias automáticas (IndexedDB)
     const TFSnap = (() => {
@@ -3243,6 +3367,10 @@
         } else {
             items.push(['place', '📍', 'Colocar en el horario']);
         }
+        const owner = tfNotesOwner(student);
+        const nNotes = tfNotesCount(student);
+        items.splice(slotId ? (att.length ? 3 : 2) : 1, 0, ['notes', '📝', nNotes ? `Notas (${nNotes})` : 'Notas']);
+        if ((owner.momPhone || '').trim() || (owner.momEmail || '').trim()) items.push(['family', '📇', 'Contactar a la familia']);
         items.push(['edit', '✏️', 'Ver o editar datos']);
         const where = slotId ? ` · ${tfSlotParts(slotId).day} ${tfSlotParts(slotId).time}` : '';
         const attLine = slotId
@@ -3277,6 +3405,8 @@
         else if (act === 'move' || act === 'place') { tfStartPlacing(student.id, slotId); }
         else if (act === 'unplace') { placeStudent(student.id, slotId, null); }
         else if (act === 'edit') { openStudentSideSheet(student.id); }
+        else if (act === 'notes') { tfOpenNotes(student.id); }
+        else if (act === 'family') { tfOpenContact(student.id); }
     }
 
     // ---------- Tocar para colocar
@@ -3359,9 +3489,13 @@
 
     // ---------- Google Drive
     const TFDrive = (() => {
-        const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+        const SCOPES = {
+            drive: 'https://www.googleapis.com/auth/drive.file',
+            calendar: 'https://www.googleapis.com/auth/calendar.app.created',
+        };
         let token = null;
         let tokenExp = 0;
+        let tokenScopes = '';
         let gisPromise = null;
 
         function clientId() {
@@ -3369,7 +3503,9 @@
             return /\.apps\.googleusercontent\.com$/.test(id) ? id : '';
         }
         function configured() { return !!clientId(); }
-        function hasToken() { return !!token && Date.now() < tokenExp - 60000; }
+        function hasToken(scope) {
+            return !!token && Date.now() < tokenExp - 60000 && (!scope || tokenScopes.split(' ').includes(scope));
+        }
         function loadGis() {
             if (window.google && window.google.accounts && window.google.accounts.oauth2) return Promise.resolve();
             if (!gisPromise) {
@@ -3385,8 +3521,8 @@
             return gisPromise;
         }
         function preload() { if (navigator.onLine && configured()) loadGis().catch(() => {}); }
-        async function getToken() {
-            if (hasToken()) return token;
+        async function getToken(scope = SCOPES.drive) {
+            if (hasToken(scope)) return token;
             if (!navigator.onLine) throw new Error('OFFLINE');
             const id = clientId();
             if (!id) throw new Error('NO_CLIENT_ID');
@@ -3394,11 +3530,16 @@
             return new Promise((resolve, reject) => {
                 const client = google.accounts.oauth2.initTokenClient({
                     client_id: id,
-                    scope: SCOPE,
+                    scope,
+                    include_granted_scopes: true,
                     callback: (resp) => {
                         if (!resp || resp.error) { reject(new Error((resp && resp.error) || 'AUTH_ERROR')); return; }
-                        if (!google.accounts.oauth2.hasGrantedAllScopes(resp, SCOPE)) { reject(new Error('SCOPE_DENIED')); return; }
+                        if (!google.accounts.oauth2.hasGrantedAllScopes(resp, scope)) {
+                            reject(new Error(scope === SCOPES.calendar ? 'CAL_SCOPE_DENIED' : 'SCOPE_DENIED'));
+                            return;
+                        }
                         token = resp.access_token;
+                        tokenScopes = resp.scope || scope;
                         tokenExp = Date.now() + (Number(resp.expires_in) || 3600) * 1000;
                         resolve(token);
                     },
@@ -3407,18 +3548,19 @@
                 client.requestAccessToken({ prompt: '' });
             });
         }
-        async function call(url, opts = {}, retry = true) {
-            const t = await getToken();
+        async function call(url, opts = {}, retry = true, scope = SCOPES.drive) {
+            const t = await getToken(scope);
             let res;
             try {
                 res = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: `Bearer ${t}` } });
             } catch (e) {
                 throw new Error(navigator.onLine ? 'NETWORK' : 'OFFLINE');
             }
-            if (res.status === 401 && retry) { token = null; return call(url, opts, false); }
+            if (res.status === 401 && retry) { token = null; return call(url, opts, false, scope); }
             if (!res.ok) {
                 const err = new Error('HTTP_' + res.status);
                 try { err.detail = await res.text(); } catch (e) { /* sin detalle */ }
+                if (res.status === 403 && /insufficient|SCOPE_INSUFFICIENT/i.test(err.detail || '')) tokenScopes = '';
                 throw err;
             }
             return res;
@@ -3461,13 +3603,27 @@
             }
             token = null;
             tokenExp = 0;
+            tokenScopes = '';
         }
-        return { configured, hasToken, preload, findFile, save, download, signOut };
+        function api(url, opts = {}, scope = SCOPES.drive) { return call(url, opts, true, scope); }
+        return { SCOPES, configured, hasToken, preload, findFile, save, download, signOut, api };
     })();
 
-    function tfDriveError(err) {
+    function tfDriveError(err, ctx = 'drive') {
         const code = (err && err.message) || 'ERROR';
-        console.warn('Respaldo en Drive:', code, err && err.detail);
+        const detail = (err && err.detail) || '';
+        console.warn('Google (' + ctx + '):', code, detail);
+        if (ctx === 'calendar') {
+            if (code === 'HTTP_403' && /accessNotConfigured|SERVICE_DISABLED|has not been used|is disabled/i.test(detail)) {
+                showToast('La Google Calendar API no está activada en tu proyecto (Paso 3, B de la guía).', 'error'); return;
+            }
+            if (code === 'CAL_SCOPE_DENIED' || (code === 'HTTP_403' && /insufficient|SCOPE_INSUFFICIENT/i.test(detail))) {
+                showToast('Falta el permiso del calendario. Toca Enviar otra vez y marca la casilla de Google Calendar.', 'error'); return;
+            }
+            if (code === 'HTTP_403' || code === 'HTTP_429') {
+                showToast('Google pidió esperar un momento. Intenta otra vez en un minuto; lo que ya se envió queda bien.', 'error'); return;
+            }
+        }
         const msgs = {
             OFFLINE: 'No hay internet. Tus datos siguen guardados en este equipo; intenta cuando tengas conexión.',
             NETWORK: 'Se cortó la conexión con Google. Tus datos siguen guardados en este equipo; intenta otra vez.',
@@ -3482,7 +3638,10 @@
             HTTP_403: 'Google rechazó el pedido. Revisa que la Google Drive API esté activada (Paso 3 de la guía).',
             HTTP_404: 'No encontré el respaldo en Drive. Guarda uno nuevo desde el equipo que tiene los datos.',
         };
-        showToast(msgs[code] || `No se pudo completar el respaldo (${code}). Tus datos siguen seguros en este equipo.`, 'error');
+        const fallback = ctx === 'calendar'
+            ? `No se pudo terminar el envío a Google Calendar (${code}). Toca Enviar otra vez; solo se manda lo que falta.`
+            : `No se pudo completar el respaldo (${code}). Tus datos siguen seguros en este equipo.`;
+        showToast(msgs[code] || fallback, 'error');
     }
 
     async function tfWithBusy(btnIds, fn) {
@@ -3930,8 +4089,485 @@
         });
         if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
+        tfSetupV2();
         tfUpdateCloudBadge();
         tfRegisterServiceWorker();
+    }
+
+    // ===========================================
+    // GOOGLE CALENDAR (un calendario aparte "TeraFlow", de TeraFlow hacia Google)
+    // ===========================================
+    const TF_TZ = 'America/Puerto_Rico';
+    const TF_DAY_INDEX = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5 };
+    const TF_GRADE_SHORT = {
+        'Kinder': 'K', '1 Grado': '1ro', '2 Grado': '2do', '3 Grado': '3ro', '4 Grado': '4to', '5 Grado': '5to',
+        '6 Grado': '6to', '7 Grado': '7mo', '8 Grado': '8vo', '9 Grado': '9no', '10 Grado': '10mo', '11 Grado': '11mo', '12 Grado': '12mo',
+    };
+    const TF_MODALITY = { I: 'Individual', G: 'Grupal', C: 'Colaborativa' };
+
+    function tfInitials(name) {
+        const words = String(name || '').split(/\s+/).filter(w => /^\p{L}/u.test(w));
+        if (!words.length) return '?';
+        return words.slice(0, 3).map(w => w[0].toUpperCase() + '.').join('');
+    }
+    function tfCalLabel(st) {
+        const g = TF_GRADE_SHORT[st.grade] || st.grade || '';
+        return g ? `${tfInitials(st.name)} · ${g}` : tfInitials(st.name);
+    }
+    function tfTodayIso() {
+        const n = new Date();
+        return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+    function tfDefaultEndIso() {
+        const n = new Date();
+        return `${n.getMonth() >= 6 ? n.getFullYear() + 1 : n.getFullYear()}-05-31`;
+    }
+    function tfParseIsoDate(iso) {
+        const [y, m, d] = String(iso).split('-').map(Number);
+        return new Date(Date.UTC(y, m - 1, d));
+    }
+    function tfFormatDay(iso) {
+        const d = tfParseIsoDate(iso);
+        if (isNaN(d)) return iso || '';
+        return d.toLocaleDateString('es-PR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    }
+    function tfHash(str) {
+        let h = 5381;
+        for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+        return (h >>> 0).toString(36);
+    }
+    function tfPlacedSlotCount() {
+        return Object.keys(appState.schedule).filter(k => (appState.schedule[k] || []).some(id => appState.students.some(s => s.id === id))).length;
+    }
+
+    function tfBuildCalendarEvents(startIso, endIso) {
+        const events = [];
+        const start = tfParseIsoDate(startIso);
+        const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`;
+        Object.keys(appState.schedule).forEach(slotId => {
+            const students = (appState.schedule[slotId] || []).map(id => appState.students.find(s => s.id === id)).filter(Boolean);
+            if (!students.length) return;
+            const { day, time } = tfSlotParts(slotId);
+            const dow = TF_DAY_INDEX[day];
+            const startMin = timeToMinutes(time);
+            if (!dow || startMin < 0) return;
+            const first = new Date(start);
+            first.setUTCDate(first.getUTCDate() + ((dow - first.getUTCDay() + 7) % 7));
+            const date = first.toISOString().slice(0, 10);
+            if (date > endIso) return;
+            const dur = students.reduce((m, s) => Math.max(m, getStudentDuration(s)), 30);
+            const interval = students.every(s => s.frequency === '2m') ? 2 : 1;
+            const kinds = [...new Set(students.map(s => TF_MODALITY[s.modality] || s.modality))].join(', ');
+            const body = {
+                summary: students.map(tfCalLabel).join(' + '),
+                description: `${kinds} · ${dur} min\nEnviado desde TeraFlow. Haz los cambios en TeraFlow: el próximo envío reemplaza lo que cambies aquí.`,
+                start: { dateTime: `${date}T${hhmm(startMin)}`, timeZone: TF_TZ },
+                end: { dateTime: `${date}T${hhmm(startMin + dur)}`, timeZone: TF_TZ },
+                recurrence: [`RRULE:FREQ=WEEKLY;INTERVAL=${interval};UNTIL=${endIso.replace(/-/g, '')}T235959Z`],
+            };
+            const sig = tfHash(JSON.stringify(body));
+            body.extendedProperties = { private: { teraflow: '1', tfKey: slotId, tfSig: sig } };
+            events.push({ key: slotId, sig, body });
+        });
+        return events;
+    }
+
+    const TFCal = (() => {
+        const BASE = 'https://www.googleapis.com/calendar/v3';
+        const api = (path, opts = {}) => TFDrive.api(BASE + path, opts, TFDrive.SCOPES.calendar);
+        const json = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const gone = e => /HTTP_(404|410)/.test(e.message);
+
+        async function ensureCalendar() {
+            const id = appState.gcal && appState.gcal.calendarId;
+            if (id) {
+                try { await api(`/calendars/${encodeURIComponent(id)}`); return id; }
+                catch (e) { if (!gone(e)) throw e; }
+            }
+            const res = await api('/calendars', json('POST', { summary: 'TeraFlow', description: 'Horario de terapias enviado desde TeraFlow.', timeZone: TF_TZ }));
+            return (await res.json()).id;
+        }
+        async function listOurs(calId) {
+            let items = [];
+            let pageToken = '';
+            do {
+                const q = new URLSearchParams({ maxResults: '250', showDeleted: 'false', privateExtendedProperty: 'teraflow=1' });
+                if (pageToken) q.set('pageToken', pageToken);
+                const data = await (await api(`/calendars/${encodeURIComponent(calId)}/events?${q}`)).json();
+                items = items.concat(data.items || []);
+                pageToken = data.nextPageToken || '';
+            } while (pageToken);
+            return items;
+        }
+        async function runPool(tasks, size, onProgress) {
+            let next = 0, done = 0;
+            const worker = async () => {
+                while (next < tasks.length) {
+                    const task = tasks[next++];
+                    await task();
+                    done++;
+                    if (onProgress) onProgress(done, tasks.length);
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(size, tasks.length) }, worker));
+        }
+        async function send(startIso, endIso, onProgress) {
+            const calId = await ensureCalendar();
+            const desired = tfBuildCalendarEvents(startIso, endIso);
+            const existing = await listOurs(calId);
+            const byKey = new Map();
+            const extras = [];
+            existing.forEach(ev => {
+                const k = ev.extendedProperties && ev.extendedProperties.private && ev.extendedProperties.private.tfKey;
+                if (k && !byKey.has(k)) byKey.set(k, ev); else extras.push(ev);
+            });
+            const stats = { created: 0, updated: 0, removed: 0, kept: 0, total: desired.length };
+            const tasks = [];
+            const evPath = id => `/calendars/${encodeURIComponent(calId)}/events${id ? '/' + encodeURIComponent(id) : ''}`;
+            desired.forEach(d => {
+                const ev = byKey.get(d.key);
+                if (ev) {
+                    byKey.delete(d.key);
+                    if (ev.extendedProperties.private.tfSig === d.sig) { stats.kept++; return; }
+                    tasks.push(async () => { await api(evPath(ev.id), json('PUT', d.body)); stats.updated++; });
+                } else {
+                    tasks.push(async () => { await api(evPath(), json('POST', d.body)); stats.created++; });
+                }
+            });
+            [...byKey.values(), ...extras].forEach(ev => tasks.push(async () => {
+                try { await api(evPath(ev.id), { method: 'DELETE' }); } catch (e) { if (!gone(e)) throw e; }
+                stats.removed++;
+            }));
+            await runPool(tasks, 4, onProgress);
+            return { calId, ...stats };
+        }
+        async function removeCalendar(calId) {
+            try { await api(`/calendars/${encodeURIComponent(calId)}`, { method: 'DELETE' }); }
+            catch (e) { if (!gone(e)) throw e; }
+        }
+        return { send, removeCalendar };
+    })();
+
+    function tfRenderCalStatus() {
+        const box = document.getElementById('calStatus');
+        if (!box) return;
+        const g = appState.gcal || {};
+        const led = c => `<span class="tf-led" style="background:${c}"></span>`;
+        const lines = [`<div class="tf-line">${led('#818cf8')}<span>Sesiones en tu horario: <strong>${tfPlacedSlotCount()}</strong>.</span></div>`];
+        if (g.lastSentAt) {
+            lines.push(`<div class="tf-line">${led('#10b981')}<span>Último envío: <strong>${tfEscape(tfFormatDate(g.lastSentAt))}</strong>, ${g.lastSentCount || 0} sesiones, del ${tfEscape(tfFormatDay(g.startDate))} al ${tfEscape(tfFormatDay(g.endDate))}.</span></div>`);
+        } else {
+            lines.push(`<div class="tf-line">${led('#6b7280')}<span>Todavía no has enviado el horario a Google Calendar.</span></div>`);
+        }
+        if (!navigator.onLine) lines.push(`<div class="tf-line">${led('#ef4444')}<span>Sin internet ahora. Envía cuando vuelva la conexión.</span></div>`);
+        box.innerHTML = lines.join('');
+        const configured = TFDrive.configured();
+        document.getElementById('calNotConfigured').classList.toggle('hidden', configured);
+        const btn = document.getElementById('calSendBtn');
+        if (btn && !btn.querySelector('.tf-spinner')) btn.disabled = !configured || !navigator.onLine;
+        document.getElementById('calRemoveBtn').classList.toggle('hidden', !g.calendarId);
+    }
+    function tfOpenCalendar() {
+        tfCloseChipActions();
+        if (tfPlacing) tfStopPlacing();
+        document.getElementById('dropdown-menu').classList.add('hidden');
+        const g = appState.gcal || {};
+        document.getElementById('calStart').value = g.startDate || tfTodayIso();
+        document.getElementById('calEnd').value = g.endDate || tfDefaultEndIso();
+        tfRenderCalStatus();
+        document.getElementById('calModal').classList.add('open');
+        TFDrive.preload();
+    }
+    async function tfSendCalendar() {
+        if (!tfDriveReady()) return;
+        const startIso = document.getElementById('calStart').value;
+        const endIso = document.getElementById('calEnd').value;
+        if (!startIso || !endIso) { showToast('Escoge la fecha de inicio y la de fin.', 'warning'); return; }
+        if (endIso < startIso) { showToast('La fecha de fin tiene que ser después de la de inicio.', 'warning'); return; }
+        if (!tfPlacedSlotCount()) { showToast('Tu horario todavía no tiene sesiones colocadas.', 'warning'); return; }
+        const btn = document.getElementById('calSendBtn');
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="tf-spinner"></span> Conectando con Google…';
+        try {
+            const r = await TFCal.send(startIso, endIso, (done, total) => {
+                btn.innerHTML = `<span class="tf-spinner"></span> Enviando ${done} de ${total}…`;
+            });
+            appState.gcal = { ...(appState.gcal || {}), calendarId: r.calId, startDate: startIso, endDate: endIso, lastSentAt: new Date().toISOString(), lastSentCount: r.total };
+            saveStateQuiet();
+            const changes = r.created + r.updated + r.removed;
+            showToast(changes
+                ? `Listo en Google Calendar: ${r.total} sesiones (${r.created} nuevas, ${r.updated} cambiadas, ${r.removed} quitadas).`
+                : `Google Calendar ya estaba al día (${r.total} sesiones).`, 'success');
+        } catch (err) {
+            tfDriveError(err, 'calendar');
+        } finally {
+            btn.innerHTML = old;
+            btn.disabled = false;
+            tfRenderCalStatus();
+        }
+    }
+    async function tfRemoveCalendar() {
+        const g = appState.gcal || {};
+        if (!g.calendarId || !tfDriveReady()) return;
+        const ok = await tfAsk({
+            title: 'Quitar el calendario TeraFlow',
+            message: 'Se borra de tu Google Calendar el calendario TeraFlow con todas sus sesiones. Tu horario en TeraFlow no cambia y puedes volver a enviarlo cuando quieras.',
+            buttons: [{ label: 'Cancelar', value: false }, { label: 'Quitar calendario', value: true, style: 'danger' }],
+        });
+        if (!ok) return;
+        try {
+            await TFCal.removeCalendar(g.calendarId);
+            appState.gcal = { startDate: g.startDate, endDate: g.endDate };
+            saveStateQuiet();
+            tfRenderCalStatus();
+            showToast('Calendario TeraFlow quitado de Google Calendar.', 'success');
+        } catch (err) {
+            tfDriveError(err, 'calendar');
+        }
+    }
+
+    // ===========================================
+    // NOTAS DE SESIÓN (viajan con el respaldo de Drive)
+    // ===========================================
+    let tfNotesStudentId = null;
+    let tfEditingNoteId = null;
+
+    function tfNotesOwner(student) {
+        if (student && student.copyLabel === 'B' && student.linkedTo) {
+            const a = appState.students.find(s => s.id === student.linkedTo);
+            if (a) return a;
+        }
+        return student;
+    }
+    function tfNotesCount(student) {
+        const o = tfNotesOwner(student);
+        return o && Array.isArray(o.notes) ? o.notes.length : 0;
+    }
+    function tfResetNoteComposer() {
+        tfEditingNoteId = null;
+        document.getElementById('noteText').value = '';
+        document.getElementById('noteDate').value = tfTodayIso();
+        document.getElementById('noteSaveBtn').textContent = 'Guardar nota';
+        document.getElementById('noteCancelEditBtn').classList.add('hidden');
+    }
+    function tfOpenNotes(studentId) {
+        const st = appState.students.find(s => s.id === studentId);
+        if (!st) return;
+        tfCloseChipActions();
+        const owner = tfNotesOwner(st);
+        tfNotesStudentId = owner.id;
+        document.getElementById('notesTitle').textContent = `Notas de ${owner.name}`;
+        document.getElementById('notesSub').textContent = `${owner.grade || ''} · ${owner.teacher || 'Sin maestro'}`;
+        tfResetNoteComposer();
+        tfRenderNotes();
+        document.getElementById('notesModal').classList.add('open');
+        if (!TF_IS_TOUCH) document.getElementById('noteText').focus();
+    }
+    function tfRenderNotes() {
+        const box = document.getElementById('notesList');
+        const owner = appState.students.find(s => s.id === tfNotesStudentId);
+        if (!box) return;
+        if (!owner) { document.getElementById('notesModal').classList.remove('open'); return; }
+        const list = (owner.notes || []).slice().sort((a, b) => (b.date + b.at).localeCompare(a.date + a.at));
+        document.getElementById('notesCount').textContent = list.length === 1 ? '1 nota' : `${list.length} notas`;
+        document.getElementById('notesCopyAllBtn').classList.toggle('hidden', !list.length);
+        box.innerHTML = list.length
+            ? list.map(n =>
+                `<article class="tf-note-card" data-note="${tfEscape(n.id)}">` +
+                `<div class="flex items-center justify-between gap-3"><span class="text-sm font-semibold text-indigo-300">${tfEscape(tfFormatDay(n.date))}</span>` +
+                `<div class="flex gap-1"><button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" data-nact="copy">Copiar</button>` +
+                `<button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" data-nact="edit">Editar</button>` +
+                `<button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" data-nact="delete">Borrar</button></div></div>` +
+                `<p class="mt-2 text-gray-200 whitespace-pre-wrap leading-relaxed">${tfEscape(n.text)}</p></article>`
+            ).join('')
+            : '<p class="text-sm text-gray-400">Todavía no hay notas. Escribe la primera arriba.</p>';
+    }
+    function tfSaveNote() {
+        const owner = appState.students.find(s => s.id === tfNotesStudentId);
+        if (!owner) return;
+        const text = document.getElementById('noteText').value.trim();
+        if (!text) { showToast('Escribe la nota antes de guardarla.', 'warning'); return; }
+        const date = document.getElementById('noteDate').value || tfTodayIso();
+        if (!Array.isArray(owner.notes)) owner.notes = [];
+        const at = new Date().toISOString();
+        const editing = tfEditingNoteId && owner.notes.find(n => n.id === tfEditingNoteId);
+        if (editing) { editing.text = text; editing.date = date; editing.at = at; }
+        else owner.notes.push({ id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date, text, at });
+        tfResetNoteComposer();
+        saveState();
+        tfRenderNotes();
+        showToast(editing ? 'Nota actualizada.' : 'Nota guardada.', 'success');
+    }
+    async function tfCopyText(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e2) { /* sin portapapeles */ }
+            ta.remove();
+        }
+    }
+    function tfNoteAction(act, noteId) {
+        const owner = appState.students.find(s => s.id === tfNotesStudentId);
+        const note = owner && (owner.notes || []).find(n => n.id === noteId);
+        if (!note) return;
+        if (act === 'copy') {
+            tfCopyText(`${tfFormatDay(note.date)}\n${note.text}`).then(() => showToast('Nota copiada.', 'success'));
+        } else if (act === 'edit') {
+            tfEditingNoteId = note.id;
+            document.getElementById('noteText').value = note.text;
+            document.getElementById('noteDate').value = note.date;
+            document.getElementById('noteSaveBtn').textContent = 'Guardar cambios';
+            document.getElementById('noteCancelEditBtn').classList.remove('hidden');
+            document.getElementById('noteText').focus();
+        } else if (act === 'delete') {
+            owner.notes = owner.notes.filter(n => n.id !== noteId);
+            if (tfEditingNoteId === noteId) tfResetNoteComposer();
+            saveState();
+            tfRenderNotes();
+            showToast('Nota borrada.', 'success', { actionLabel: 'Deshacer', onAction: performUndo });
+        }
+    }
+    function tfCopyAllNotes() {
+        const owner = appState.students.find(s => s.id === tfNotesStudentId);
+        if (!owner || !(owner.notes || []).length) return;
+        const list = owner.notes.slice().sort((a, b) => (a.date + a.at).localeCompare(b.date + b.at));
+        const text = `Notas de ${owner.name}\n\n` + list.map(n => `${tfFormatDay(n.date)}\n${n.text}`).join('\n\n');
+        tfCopyText(text).then(() => showToast(`${list.length} notas copiadas.`, 'success'));
+    }
+
+    // ===========================================
+    // CONTACTO DE LA FAMILIA (llamar, WhatsApp, email)
+    // ===========================================
+    function tfPhoneLinks(phone) {
+        let d = String(phone || '').replace(/\D/g, '');
+        if (!d) return null;
+        if (d.length === 10) d = '1' + d; // Puerto Rico y EE. UU.
+        return { tel: 'tel:+' + d, wa: 'https://wa.me/' + d };
+    }
+    function tfFamilyButtons(phone, email, size = '') {
+        const links = tfPhoneLinks(phone);
+        const mail = String(email || '').trim();
+        const cls = `tf-btn tf-btn-secondary ${size}`;
+        const btns = [];
+        if (links) {
+            btns.push(`<button type="button" class="${cls}" data-link="${tfEscape(links.tel)}">📞 Llamar</button>`);
+            btns.push(`<button type="button" class="${cls}" data-link="${tfEscape(links.wa)}" data-external="1">💬 WhatsApp</button>`);
+        }
+        if (mail) btns.push(`<button type="button" class="${cls}" data-link="mailto:${tfEscape(mail)}">✉️ Email</button>`);
+        return btns.join('');
+    }
+    function tfOpenLink(url, external) {
+        const a = document.createElement('a');
+        a.href = url;
+        if (external) { a.target = '_blank'; a.rel = 'noopener'; }
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+    function tfOpenContact(studentId) {
+        const st = appState.students.find(s => s.id === studentId);
+        if (!st) return;
+        tfCloseChipActions();
+        const o = tfNotesOwner(st);
+        const phone = (o.momPhone || '').trim();
+        const email = (o.momEmail || '').trim();
+        const address = (o.momAddress || '').trim();
+        document.getElementById('contactTitle').textContent = o.name;
+        document.getElementById('contactSub').textContent = `${o.grade || ''} · ${o.teacher || 'Sin maestro'}`;
+        const rows = [];
+        if (phone) rows.push(`<div><div class="text-xs text-gray-400">Teléfono</div><div class="text-lg text-gray-100">${tfEscape(phone)}</div></div>`);
+        if (email) rows.push(`<div><div class="text-xs text-gray-400">Email</div><div class="text-gray-100 break-all">${tfEscape(email)}</div></div>`);
+        if (address) rows.push(`<div><div class="text-xs text-gray-400">Dirección postal</div><div class="text-gray-100 whitespace-pre-wrap">${tfEscape(address)}</div></div>`);
+        document.getElementById('contactBody').innerHTML = rows.length
+            ? rows.join('') + `<div class="grid grid-cols-3 gap-2 pt-2">${tfFamilyButtons(phone, email, 'tf-btn-lg')}</div>`
+            : '<p class="text-gray-400">No hay teléfono ni email todavía. Añádelos en Ver o editar datos.</p>';
+        document.getElementById('contactEditBtn').onclick = () => { document.getElementById('contactModal').classList.remove('open'); openStudentSideSheet(o.id); };
+        document.getElementById('contactModal').classList.add('open');
+    }
+    function tfRenderFamilies(query = '') {
+        const box = document.getElementById('familiesList');
+        const q = query.trim().toLowerCase();
+        const list = appState.students
+            .filter(s => s.copyLabel !== 'B')
+            .filter(s => !q || [s.name, s.teacher, s.grade, s.momPhone, s.momEmail].some(v => String(v || '').toLowerCase().includes(q)))
+            .sort((a, b) => String(a.name).localeCompare(String(b.name), 'es'));
+        box.innerHTML = list.length
+            ? list.map(s => {
+                const btns = tfFamilyButtons(s.momPhone, s.momEmail, 'tf-btn-sm');
+                return `<div class="tf-family-row"><div class="min-w-0"><div class="font-semibold text-gray-100 truncate">${tfEscape(s.name)}</div>` +
+                    `<div class="text-xs text-gray-400 truncate">${tfEscape(s.grade || '')} · ${tfEscape(s.teacher || 'Sin maestro')}${s.momPhone ? ' · ' + tfEscape(s.momPhone) : ''}</div></div>` +
+                    `<div class="flex flex-wrap justify-end gap-2">${btns || `<button type="button" class="tf-btn tf-btn-ghost tf-btn-sm" data-edit-student="${tfEscape(s.id)}">Añadir contacto</button>`}</div></div>`;
+            }).join('')
+            : '<p class="text-sm text-gray-400">No encontré estudiantes con esa búsqueda.</p>';
+    }
+    function tfOpenFamilies() {
+        tfCloseChipActions();
+        document.getElementById('dropdown-menu').classList.add('hidden');
+        document.getElementById('familiesSearch').value = '';
+        tfRenderFamilies();
+        document.getElementById('familiesModal').classList.add('open');
+    }
+    function tfRenderSideFamily() {
+        const box = document.getElementById('familyActions');
+        if (!box) return;
+        box.innerHTML = tfFamilyButtons(document.getElementById('studentMomPhone').value, document.getElementById('studentMomEmail').value, 'tf-btn-sm');
+    }
+    function tfSideSheetExtras(studentId) {
+        tfRenderSideFamily();
+        const row = document.getElementById('studentNotesRow');
+        if (!row) return;
+        const st = studentId && appState.students.find(s => s.id === studentId);
+        row.classList.toggle('hidden', !st);
+        if (st) {
+            const n = tfNotesCount(st);
+            document.getElementById('openNotesBtn').textContent = n ? `📝 Ver notas (${n})` : '📝 Escribir la primera nota';
+        }
+    }
+
+    function tfSetupV2() {
+        // Calendario
+        document.getElementById('calHeaderBtn').onclick = () => tfOpenCalendar();
+        document.getElementById('exportIcsBtn').onclick = (e) => { e.preventDefault(); tfOpenCalendar(); };
+        document.getElementById('calSendBtn').onclick = () => tfSendCalendar();
+        document.getElementById('calRemoveBtn').onclick = () => tfRemoveCalendar();
+        document.getElementById('calIcsBtn').onclick = () => { document.getElementById('calModal').classList.remove('open'); openExportIcsModal(); };
+        // Notas
+        document.getElementById('noteSaveBtn').onclick = () => tfSaveNote();
+        document.getElementById('noteCancelEditBtn').onclick = () => tfResetNoteComposer();
+        document.getElementById('notesCopyAllBtn').onclick = () => tfCopyAllNotes();
+        document.getElementById('notesList').addEventListener('click', e => {
+            const b = e.target.closest('[data-nact]');
+            const card = e.target.closest('[data-note]');
+            if (b && card) tfNoteAction(b.dataset.nact, card.dataset.note);
+        });
+        document.getElementById('openNotesBtn').onclick = () => tfOpenNotes(document.getElementById('studentId').value);
+        // Familias
+        document.getElementById('menuFamiliesBtn').onclick = (e) => { e.preventDefault(); tfOpenFamilies(); };
+        document.getElementById('familiesSearch').addEventListener('input', e => tfRenderFamilies(e.target.value));
+        document.getElementById('familiesList').addEventListener('click', e => {
+            const ed = e.target.closest('[data-edit-student]');
+            if (ed) { document.getElementById('familiesModal').classList.remove('open'); openStudentSideSheet(ed.dataset.editStudent); }
+        });
+        ['studentMomPhone', 'studentMomEmail'].forEach(id => document.getElementById(id).addEventListener('input', tfRenderSideFamily));
+        document.addEventListener('click', e => {
+            const b = e.target.closest && e.target.closest('[data-link]');
+            if (!b) return;
+            e.preventDefault();
+            tfOpenLink(b.dataset.link, b.dataset.external === '1');
+        });
+        // Cerrar al tocar fuera
+        ['calModal', 'notesModal', 'contactModal', 'familiesModal'].forEach(id => {
+            const m = document.getElementById(id);
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+        window.addEventListener('online', tfRenderCalStatus);
+        window.addEventListener('offline', tfRenderCalStatus);
     }
 
 
